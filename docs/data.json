@@ -1,14 +1,14 @@
 {
-  "temperature_ruangan": "24.81",
-  "humidity_ruangan": "55.96",
-  "ph": "5.74",
-  "nutrisi": "1469.87",
-  "temperature_air": "25.61",
-  "ketinggian_air": "10.19",
-  "katup_1": 0,
-  "katup_2": 1,
-  "katup_3": 0,
-  "katup_4": 0,
-  "debit": "0.81",
-  "pompa": 0
+  "temperature_ruangan": "27.05",
+  "humidity_ruangan": "43.38",
+  "ph": "6.45",
+  "nutrisi": "957.77",
+  "temperature_air": "24.03",
+  "ketinggian_air": "28.73",
+  "katup_1": 1,
+  "katup_2": 0,
+  "katup_3": 1,
+  "katup_4": 1,
+  "debit": "1.40",
+  "pompa": 1
 }
