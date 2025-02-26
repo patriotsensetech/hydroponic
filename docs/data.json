@@ -7,8 +7,8 @@
   "ketinggian_air": "17.37",
   "katup_1": 1,
   "katup_2": 1,
-  "katup_3": 0,
-  "katup_4": 0,
+  "katup_3": 1,
+  "katup_4": 1,
   "debit": "2.44",
   "pompa": 0
 }
