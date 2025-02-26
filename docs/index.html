@@ -26,28 +26,6 @@
         .form-switch .form-check-input:focus {
             box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
         }
-        .btn-loading {
-            position: relative;
-            pointer-events: none;
-        }
-        .btn-loading::after {
-            content: "";
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-top: -8px;
-            margin-left: -8px;
-            border: 2px solid #fff;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -98,16 +76,18 @@
     </div>
 
     <script>
-        const API_URL = "https://patriotsensetech.github.io/hydroponic/data.json";
-        const GITHUB_API = "https://api.github.com/repos/patriotsensetech/hydroponic/contents/docs/data.json";
-        const GITHUB_TOKEN = "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";
+        const REPO_OWNER = "patriotsensetech";
+        const REPO_NAME = "hydroponic";
+        const FILE_PATH = "docs/data.json";
+        const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+        const GITHUB_TOKEN = "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"; // Ganti dengan token Anda
 
         let monitoringChart;
 
         // Fungsi untuk mengambil data
         async function fetchData() {
             try {
-                const response = await fetch(API_URL + "?t=" + new Date().getTime(), { cache: "no-cache" });
+                const response = await fetch(`https://${REPO_OWNER}.github.io/${REPO_NAME}/${FILE_PATH}?t=${new Date().getTime()}`, { cache: "no-cache" });
                 if (!response.ok) throw new Error("Gagal mengambil data");
                 const data = await response.json();
                 updateMonitoringUI(data);
@@ -167,28 +147,31 @@
             }).join("");
         }
 
-        // Fungsi untuk memperbarui grafik
+        // Fungsi untuk memperbarui grafik (Bar Chart)
         function updateChart(data) {
             const ctx = document.getElementById("monitoringChart").getContext("2d");
             if (monitoringChart) {
                 monitoringChart.destroy();
             }
             monitoringChart = new Chart(ctx, {
-                type: "line",
+                type: "bar",
                 data: {
-                    labels: ["Sekarang"],
+                    labels: ["Suhu Ruangan", "Kelembapan", "pH Air", "Nutrisi", "Suhu Air", "Ketinggian Air", "Debit"],
                     datasets: [
                         {
-                            label: "pH Air",
-                            data: [data.ph],
+                            label: "Nilai Sensor",
+                            data: [
+                                data.temperature_ruangan,
+                                data.humidity_ruangan,
+                                data.ph,
+                                data.nutrisi,
+                                data.temperature_air,
+                                data.ketinggian_air,
+                                data.debit,
+                            ],
+                            backgroundColor: "#007bff",
                             borderColor: "#007bff",
-                            fill: false,
-                        },
-                        {
-                            label: "Suhu Air",
-                            data: [data.temperature_air],
-                            borderColor: "#ff5733",
-                            fill: false,
+                            borderWidth: 1,
                         },
                     ],
                 },
@@ -213,14 +196,14 @@
                 updateStatus.innerText = `Mengubah status katup ${katupNumber}...`;
                 updateStatus.style.color = "#000";
 
-                const response = await fetch(API_URL + "?t=" + new Date().getTime());
+                const response = await fetch(`https://${REPO_OWNER}.github.io/${REPO_NAME}/${FILE_PATH}?t=${new Date().getTime()}`);
                 const data = await response.json();
                 data[`katup_${katupNumber}`] = data[`katup_${katupNumber}`] ? 0 : 1;
 
                 const updatedContent = btoa(JSON.stringify(data, null, 2));
 
-                const fileData = await fetch(GITHUB_API, { headers: { Authorization: `token ${GITHUB_TOKEN}` } }).then(res => res.json());
-                await fetch(GITHUB_API, {
+                const fileData = await fetch(API_URL, { headers: { Authorization: `token ${GITHUB_TOKEN}` } }).then(res => res.json());
+                await fetch(API_URL, {
                     method: "PUT",
                     headers: {
                         Authorization: `token ${GITHUB_TOKEN}`,
