@@ -8,12 +8,46 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: Arial, sans-serif; }
-        .status-on { color: green; font-weight: bold; }
-        .status-off { color: red; font-weight: bold; }
+        .status-on { color: #28a745; font-weight: bold; }
+        .status-off { color: #dc3545; font-weight: bold; }
         .card { transition: transform 0.2s; }
         .card:hover { transform: scale(1.05); }
         .nav-link { cursor: pointer; }
         .tab-content { margin-top: 20px; }
+        .form-switch .form-check-input {
+            width: 3.5em;
+            height: 1.8em;
+            cursor: pointer;
+        }
+        .form-switch .form-check-input:checked {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        .form-switch .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+        }
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+        }
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-top: -8px;
+            margin-left: -8px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -169,7 +203,16 @@
 
         // Fungsi untuk toggle katup
         async function toggleKatup(katupNumber) {
+            const toggleButton = document.getElementById(`katup_${katupNumber}`);
+            const statusText = document.querySelector(`#katup-container .card:nth-child(${katupNumber}) p`);
+            const updateStatus = document.getElementById("updateStatus");
+
             try {
+                // Nonaktifkan tombol dan tampilkan pesan
+                toggleButton.disabled = true;
+                updateStatus.innerText = `Mengubah status katup ${katupNumber}...`;
+                updateStatus.style.color = "#000";
+
                 const response = await fetch(API_URL + "?t=" + new Date().getTime());
                 const data = await response.json();
                 data[`katup_${katupNumber}`] = data[`katup_${katupNumber}`] ? 0 : 1;
@@ -190,12 +233,19 @@
                     }),
                 });
 
-                document.getElementById("updateStatus").innerText = "Data berhasil diperbarui!";
-                setTimeout(() => document.getElementById("updateStatus").innerText = "", 3000);
-                fetchData();
+                // Update UI
+                statusText.innerText = data[`katup_${katupNumber}`] ? "ON" : "OFF";
+                statusText.className = data[`katup_${katupNumber}`] ? "status-on" : "status-off";
+                updateStatus.innerText = `Status katup ${katupNumber} berhasil diubah!`;
+                updateStatus.style.color = "#28a745";
             } catch (error) {
                 console.error("Error:", error);
-                document.getElementById("updateStatus").innerText = "Gagal memperbarui data!";
+                updateStatus.innerText = `Gagal mengubah status katup ${katupNumber}!`;
+                updateStatus.style.color = "#dc3545";
+            } finally {
+                // Aktifkan kembali tombol
+                toggleButton.disabled = false;
+                setTimeout(() => updateStatus.innerText = "", 3000);
             }
         }
 
