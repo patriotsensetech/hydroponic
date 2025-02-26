@@ -1,242 +1,169 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Hidroponik</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Hydroponic Control Panel</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        .status-on { color: #28a745; font-weight: bold; }
-        .status-off { color: #dc3545; font-weight: bold; }
-        .card { transition: transform 0.2s; }
-        .card:hover { transform: scale(1.05); }
-        .nav-link { cursor: pointer; }
-        .tab-content { margin-top: 20px; }
-        .form-switch .form-check-input {
-            width: 3.5em;
-            height: 1.8em;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .control-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .control-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .control-card h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #555;
+        }
+        .control-card button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
+            background-color: #007bff;
+            color: white;
         }
-        .form-switch .form-check-input:checked {
-            background-color: #28a745;
-            border-color: #28a745;
-        }
-        .form-switch .form-check-input:focus {
-            box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+        .control-card button.off {
+            background-color: #dc3545;
         }
     </style>
 </head>
 <body>
-
-    <div class="container py-4">
-        <h1 class="text-center text-primary mb-4">Dashboard Hidroponik</h1>
-
-        <!-- Navigasi Tab -->
-        <ul class="nav nav-tabs justify-content-center">
-            <li class="nav-item">
-                <a class="nav-link active" data-bs-toggle="tab" href="#monitoring">Monitoring</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#control">Kontrol Katup</a>
-            </li>
-        </ul>
-
-        <!-- Konten Tab -->
-        <div class="tab-content">
-            <!-- Tab Monitoring -->
-            <div id="monitoring" class="tab-pane fade show active">
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="row" id="sensor-data">
-                            <!-- Data sensor akan diisi oleh JavaScript -->
-                        </div>
-                        <div class="mt-4 p-4 bg-white shadow-sm rounded">
-                            <h2 class="text-center mb-3">Grafik Monitoring</h2>
-                            <canvas id="monitoringChart"></canvas>
-                        </div>
-                        <p class="text-center mt-3 text-muted" id="lastUpdate">Terakhir diperbarui: -</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab Kontrol Katup -->
-            <div id="control" class="tab-pane fade">
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <p id="updateStatus" class="text-center fw-bold"></p>
-                        <div class="row" id="katup-container">
-                            <!-- Katup akan di-generate oleh JavaScript -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <h1>Hydroponic Control Panel</h1>
+    <div class="control-container" id="control-container">
+        <!-- Kontrol akan diisi oleh JavaScript -->
     </div>
 
     <script>
+        const GITHUB_TOKEN = "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"; // Replace with your new token
         const REPO_OWNER = "patriotsensetech";
         const REPO_NAME = "hydroponic";
         const FILE_PATH = "docs/data.json";
         const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-        const GITHUB_TOKEN = "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"; // Ganti dengan token Anda
 
-        let monitoringChart;
-
-        // Fungsi untuk mengambil data
-        async function fetchData() {
+        // Fungsi untuk mengambil data terbaru dari GitHub
+        async function fetchLatestData() {
             try {
-                const response = await fetch(`https://${REPO_OWNER}.github.io/${REPO_NAME}/${FILE_PATH}?t=${new Date().getTime()}`, { cache: "no-cache" });
-                if (!response.ok) throw new Error("Gagal mengambil data");
+                const response = await fetch(API_URL, {
+                    headers: { Authorization: `token ${GITHUB_TOKEN}` },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
                 const data = await response.json();
-                updateMonitoringUI(data);
-                updateControlUI(data);
-                updateChart(data);
-                document.getElementById("lastUpdate").innerText = `Terakhir diperbarui: ${new Date().toLocaleString()}`;
+
+                // Periksa apakah field 'content' ada dan valid
+                if (!data.content) {
+                    throw new Error("Invalid response: 'content' field is missing");
+                }
+
+                return {
+                    sha: data.sha,
+                    content: JSON.parse(atob(data.content)),
+                };
             } catch (error) {
-                console.error("Error:", error);
+                console.error("Error fetching data:", error);
+                return null;
             }
         }
 
-        // Fungsi untuk memperbarui UI Monitoring
-        function updateMonitoringUI(data) {
-            const sensorData = [
-                { label: "Suhu Ruangan", value: data.temperature_ruangan, unit: "°C" },
-                { label: "Kelembapan", value: data.humidity_ruangan, unit: "%" },
-                { label: "pH Air", value: data.ph, unit: "" },
-                { label: "Nutrisi", value: data.nutrisi, unit: "ppm" },
-                { label: "Suhu Air", value: data.temperature_air, unit: "°C" },
-                { label: "Ketinggian Air", value: data.ketinggian_air, unit: "cm" },
-                { label: "Debit", value: data.debit, unit: "L/min" },
-            ];
-
-            const sensorContainer = document.getElementById("sensor-data");
-            sensorContainer.innerHTML = sensorData.map(item => `
-                <div class="col-md-4 mb-3">
-                    <div class="card text-center shadow-sm border-0 rounded-lg">
-                        <div class="card-body">
-                            <h5 class="card-title text-secondary">${item.label}</h5>
-                            <p class="display-4 text-primary fw-bold">${item.value} ${item.unit}</p>
-                        </div>
-                    </div>
-                </div>
-            `).join("");
-        }
-
-        // Fungsi untuk memperbarui UI Kontrol Katup
-        function updateControlUI(data) {
-            const container = document.getElementById("katup-container");
-            container.innerHTML = Array.from({ length: 4 }, (_, i) => i + 1).map(i => {
-                const katupState = data[`katup_${i}`] ? "ON" : "OFF";
-                const katupClass = data[`katup_${i}`] ? "status-on" : "status-off";
-                const checked = data[`katup_${i}`] ? "checked" : "";
-
-                return `
-                    <div class="col-md-3 mb-3 text-center">
-                        <div class="card shadow border-0 rounded-lg p-3">
-                            <h5 class="text-secondary">Katup ${i}</h5>
-                            <p class="${katupClass}">${katupState}</p>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="katup_${i}" ${checked} onchange="toggleKatup(${i})">
-                                <label class="form-check-label" for="katup_${i}">Toggle</label>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join("");
-        }
-
-        // Fungsi untuk memperbarui grafik (Bar Chart)
-        function updateChart(data) {
-            const ctx = document.getElementById("monitoringChart").getContext("2d");
-            if (monitoringChart) {
-                monitoringChart.destroy();
-            }
-            monitoringChart = new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: ["Suhu Ruangan", "Kelembapan", "pH Air", "Nutrisi", "Suhu Air", "Ketinggian Air", "Debit"],
-                    datasets: [
-                        {
-                            label: "Nilai Sensor",
-                            data: [
-                                data.temperature_ruangan,
-                                data.humidity_ruangan,
-                                data.ph,
-                                data.nutrisi,
-                                data.temperature_air,
-                                data.ketinggian_air,
-                                data.debit,
-                            ],
-                            backgroundColor: "#007bff",
-                            borderColor: "#007bff",
-                            borderWidth: 1,
-                        },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { beginAtZero: true },
-                    },
-                },
-            });
-        }
-
-        // Fungsi untuk toggle katup
-        async function toggleKatup(katupNumber) {
-            const toggleButton = document.getElementById(`katup_${katupNumber}`);
-            const statusText = document.querySelector(`#katup-container .card:nth-child(${katupNumber}) p`);
-            const updateStatus = document.getElementById("updateStatus");
-
+        // Fungsi untuk mengupdate data di GitHub
+        async function updateData(newData, sha) {
+            const encodedContent = btoa(JSON.stringify(newData, null, 2));
             try {
-                // Nonaktifkan tombol dan tampilkan pesan
-                toggleButton.disabled = true;
-                updateStatus.innerText = `Mengubah status katup ${katupNumber}...`;
-                updateStatus.style.color = "#000";
-
-                const response = await fetch(`https://${REPO_OWNER}.github.io/${REPO_NAME}/${FILE_PATH}?t=${new Date().getTime()}`);
-                const data = await response.json();
-                data[`katup_${katupNumber}`] = data[`katup_${katupNumber}`] ? 0 : 1;
-
-                const updatedContent = btoa(JSON.stringify(data, null, 2));
-
-                const fileData = await fetch(API_URL, { headers: { Authorization: `token ${GITHUB_TOKEN}` } }).then(res => res.json());
-                await fetch(API_URL, {
+                const response = await fetch(API_URL, {
                     method: "PUT",
                     headers: {
                         Authorization: `token ${GITHUB_TOKEN}`,
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        message: "Update katup status",
-                        content: updatedContent,
-                        sha: fileData.sha,
+                        message: "Update data.json via control panel",
+                        content: encodedContent,
+                        sha: sha,
                     }),
                 });
 
-                // Update UI
-                statusText.innerText = data[`katup_${katupNumber}`] ? "ON" : "OFF";
-                statusText.className = data[`katup_${katupNumber}`] ? "status-on" : "status-off";
-                updateStatus.innerText = `Status katup ${katupNumber} berhasil diubah!`;
-                updateStatus.style.color = "#28a745";
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                console.log("Data updated successfully:", newData);
+                return true;
             } catch (error) {
-                console.error("Error:", error);
-                updateStatus.innerText = `Gagal mengubah status katup ${katupNumber}!`;
-                updateStatus.style.color = "#dc3545";
-            } finally {
-                // Aktifkan kembali tombol
-                toggleButton.disabled = false;
-                setTimeout(() => updateStatus.innerText = "", 3000);
+                console.error("Error updating data:", error);
+                return false;
             }
         }
 
-        // Jalankan fetchData setiap 5 detik
-        fetchData();
-        setInterval(fetchData, 5000);
-    </script>
+        // Fungsi untuk membuat tombol kontrol
+        function createControl(key, value) {
+            const card = document.createElement('div');
+            card.className = 'control-card';
+            const button = document.createElement('button');
+            button.textContent = value === 1 ? 'ON' : 'OFF';
+            button.classList.toggle('off', value === 0);
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            button.addEventListener('click', async () => {
+                const latestData = await fetchLatestData();
+                if (!latestData) return;
+
+                // Toggle nilai
+                latestData.content[key] = latestData.content[key] === 1 ? 0 : 1;
+
+                // Update data di GitHub
+                const success = await updateData(latestData.content, latestData.sha);
+                if (success) {
+                    button.textContent = latestData.content[key] === 1 ? 'ON' : 'OFF';
+                    button.classList.toggle('off', latestData.content[key] === 0);
+                }
+            });
+
+            card.innerHTML = `<h2>${key.replace(/_/g, ' ')}</h2>`;
+            card.appendChild(button);
+            return card;
+        }
+
+        // Fungsi untuk memuat kontrol
+        async function loadControls() {
+            const latestData = await fetchLatestData();
+            if (!latestData) return;
+
+            const container = document.getElementById('control-container');
+            container.innerHTML = '';
+
+            // Buat kontrol untuk katup dan pompa
+            const controls = ['katup_1', 'katup_2', 'katup_3', 'katup_4', 'pompa'];
+            controls.forEach(key => {
+                const control = createControl(key, latestData.content[key]);
+                container.appendChild(control);
+            });
+        }
+
+        // Muat kontrol saat halaman dimuat
+        loadControls();
+    </script>
 </body>
 </html>
