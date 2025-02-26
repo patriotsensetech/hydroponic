@@ -1,0 +1,14 @@
+{
+  "temperature_ruangan": 22.63,
+  "humidity_ruangan": 48.15,
+  "ph": 6.5,
+  "nutrisi": 1200,
+  "temperature_air": 24.8,
+  "ketinggian_air": 35.5,
+  "katup_1": true,
+  "katup_2": false,
+  "katup_3": true,
+  "katup_4": false,
+  "debit": 2.3,
+  "pompa": true
+}
