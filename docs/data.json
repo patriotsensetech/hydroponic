@@ -6,9 +6,9 @@
   "temperature_air": "25.59",
   "ketinggian_air": "18.81",
   "katup_1": 1,
-  "katup_2": 0,
+  "katup_2": 1,
   "katup_3": 1,
-  "katup_4": 0,
+  "katup_4": 1,
   "debit": "0.96",
   "pompa": 0
 }
